@@ -1,7 +1,23 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
+import { readInventory, upsertInventory } from "./inventory";
 
-const SALES_PATH = join(process.cwd(), "data", "sales.json");
+const DATA_PATH = join(process.cwd(), "data", "sales.json");
+const TMP_PATH = join("/tmp", "sales.json");
+
+function getSalesPath(): string {
+  try {
+    writeFileSync(DATA_PATH, readFileSync(DATA_PATH));
+    return DATA_PATH;
+  } catch {
+    return TMP_PATH;
+  }
+}
+
+function ensureDir(filePath: string): void {
+  const dir = dirname(filePath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+}
 
 export type PaymentMethod = "cash" | "mobile-money" | "card";
 
@@ -24,17 +40,23 @@ export interface Sale {
 }
 
 export function readSales(): Sale[] {
-  try {
-    if (!existsSync(SALES_PATH)) return [];
-    const raw = readFileSync(SALES_PATH, "utf-8");
-    return JSON.parse(raw) as Sale[];
-  } catch {
-    return [];
+  const paths = [DATA_PATH, TMP_PATH];
+  for (const p of paths) {
+    try {
+      if (existsSync(p)) {
+        const raw = readFileSync(p, "utf-8");
+        const data = JSON.parse(raw) as Sale[];
+        if (data.length > 0) return data;
+      }
+    } catch { /* try next */ }
   }
+  return [];
 }
 
 function writeSales(sales: Sale[]): void {
-  writeFileSync(SALES_PATH, JSON.stringify(sales, null, 2), "utf-8");
+  const path = getSalesPath();
+  ensureDir(path);
+  writeFileSync(path, JSON.stringify(sales, null, 2), "utf-8");
 }
 
 export function createSale(sale: Omit<Sale, "id" | "date">): Sale {
@@ -46,7 +68,24 @@ export function createSale(sale: Omit<Sale, "id" | "date">): Sale {
   };
   sales.unshift(newSale);
   writeSales(sales);
+
+  updateInventoryFromSale(newSale);
+
   return newSale;
+}
+
+function updateInventoryFromSale(sale: Sale): void {
+  try {
+    const inventory = readInventory();
+    for (const item of sale.items) {
+      const inv = inventory.find((i) => i.slug === item.slug);
+      if (inv) {
+        inv.qtySoldCDI += item.qty;
+        inv.qtyInStock = Math.max(0, inv.qtyInStock - item.qty);
+        upsertInventory(inv);
+      }
+    }
+  } catch { /* don't block sale if inventory update fails */ }
 }
 
 export function getSalesToday(): Sale[] {

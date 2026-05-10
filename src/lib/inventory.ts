@@ -1,7 +1,22 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
 
-const INVENTORY_PATH = join(process.cwd(), "data", "inventory.json");
+const DATA_PATH = join(process.cwd(), "data", "inventory.json");
+const TMP_PATH = join("/tmp", "inventory.json");
+
+function getInventoryPath(): string {
+  try {
+    writeFileSync(DATA_PATH, readFileSync(DATA_PATH));
+    return DATA_PATH;
+  } catch {
+    return TMP_PATH;
+  }
+}
+
+function ensureDir(filePath: string): void {
+  const dir = dirname(filePath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+}
 
 export interface BookInventory {
   slug: string;
@@ -21,17 +36,23 @@ export interface BookInventory {
 }
 
 export function readInventory(): BookInventory[] {
-  try {
-    if (!existsSync(INVENTORY_PATH)) return [];
-    const raw = readFileSync(INVENTORY_PATH, "utf-8");
-    return JSON.parse(raw) as BookInventory[];
-  } catch {
-    return [];
+  const paths = [DATA_PATH, TMP_PATH];
+  for (const p of paths) {
+    try {
+      if (existsSync(p)) {
+        const raw = readFileSync(p, "utf-8");
+        const data = JSON.parse(raw) as BookInventory[];
+        if (data.length > 0) return data;
+      }
+    } catch { /* try next */ }
   }
+  return [];
 }
 
-export function writeInventory(items: BookInventory[]): void {
-  writeFileSync(INVENTORY_PATH, JSON.stringify(items, null, 2), "utf-8");
+function writeInventory(items: BookInventory[]): void {
+  const path = getInventoryPath();
+  ensureDir(path);
+  writeFileSync(path, JSON.stringify(items, null, 2), "utf-8");
 }
 
 export function upsertInventory(item: BookInventory): BookInventory {
@@ -49,54 +70,4 @@ export function upsertInventory(item: BookInventory): BookInventory {
 
 export function getInventoryBySlug(slug: string): BookInventory | undefined {
   return readInventory().find((i) => i.slug === slug);
-}
-
-export interface MarginCalc {
-  totalPurchase: number;
-  totalWeight: number;
-  totalShipping: number;
-  costOfReturn: number;
-  unitCost: number;
-  marginFranceUnit: number;
-  marginFranceTotal: number;
-  marginFranceNet: number;
-  marginCDIUnit: number;
-  marginCDITotal: number;
-  marginCDINet: number;
-  totalRevenueFrance: number;
-  totalRevenueCDI: number;
-}
-
-export function calculateMargins(inv: BookInventory): MarginCalc {
-  const qty = inv.qtyOrdered || 1;
-  const totalPurchase = inv.purchasePrice * qty;
-  const totalWeight = inv.unitWeightGrams * qty;
-  const costOfReturn = totalPurchase + inv.shippingCost;
-  const unitCost = costOfReturn / qty;
-
-  const totalRevenueFrance = (inv.salePriceFrance ?? 0) * inv.qtySoldFrance;
-  const marginFranceUnit = (inv.salePriceFrance ?? 0) - unitCost;
-  const marginFranceTotal = marginFranceUnit * inv.qtySoldFrance;
-  const marginFranceNet = marginFranceTotal - inv.authorRights - inv.marketingCost;
-
-  const totalRevenueCDI = (inv.salePriceCDI ?? 0) * inv.qtySoldCDI;
-  const marginCDIUnit = (inv.salePriceCDI ?? 0) - unitCost;
-  const marginCDITotal = marginCDIUnit * inv.qtySoldCDI;
-  const marginCDINet = marginCDITotal - inv.authorRights - inv.marketingCost;
-
-  return {
-    totalPurchase,
-    totalWeight,
-    totalShipping: inv.shippingCost,
-    costOfReturn,
-    unitCost,
-    marginFranceUnit,
-    marginFranceTotal,
-    marginFranceNet,
-    marginCDIUnit,
-    marginCDITotal,
-    marginCDINet,
-    totalRevenueFrance,
-    totalRevenueCDI,
-  };
 }

@@ -45,7 +45,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
-  const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [amountPaid, setAmountPaid] = useState<number | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [processing, setProcessing] = useState(false);
   const [lastSale, setLastSale] = useState<Sale | null>(null);
@@ -78,7 +78,8 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
     : availableBooks;
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const change = amountPaid - cartTotal;
+  const effectiveAmountPaid = amountPaid ?? cartTotal;
+  const change = effectiveAmountPaid - cartTotal;
 
   const addToCart = (book: Book) => {
     setCart((prev) => {
@@ -113,7 +114,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    if (paymentMethod === "cash" && amountPaid < cartTotal) {
+    if (paymentMethod === "cash" && effectiveAmountPaid < cartTotal) {
       showMessage("Montant insuffisant", "error");
       return;
     }
@@ -127,7 +128,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
           items: cart.map(({ slug, title, price, qty }) => ({ slug, title, price, qty })),
           total: cartTotal,
           paymentMethod,
-          amountPaid: paymentMethod === "cash" ? amountPaid : cartTotal,
+          amountPaid: paymentMethod === "cash" ? effectiveAmountPaid : cartTotal,
           change: paymentMethod === "cash" ? Math.max(0, change) : 0,
           customerName: customerName || undefined,
         }),
@@ -137,13 +138,16 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
         const sale = await res.json();
         setLastSale(sale);
         setCart([]);
-        setAmountPaid(0);
+        setAmountPaid(null);
         setCustomerName("");
         showMessage(`Vente ${sale.id} enregistrée`, "success");
         fetchSales();
+      } else {
+        const err = await res.json().catch(() => null);
+        showMessage(err?.error || `Erreur serveur (${res.status})`, "error");
       }
     } catch {
-      showMessage("Erreur lors de la vente", "error");
+      showMessage("Erreur réseau lors de la vente", "error");
     } finally {
       setProcessing(false);
     }
@@ -318,7 +322,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
                     key={pm.value}
                     onClick={() => {
                       setPaymentMethod(pm.value);
-                      if (pm.value !== "cash") setAmountPaid(cartTotal);
+                      setAmountPaid(null);
                     }}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors border ${
                       paymentMethod === pm.value
@@ -337,12 +341,12 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
                   <label className="block text-xs font-medium text-text-muted mb-1">Montant reçu (FCFA)</label>
                   <input
                     type="number"
-                    value={amountPaid || ""}
-                    onChange={(e) => setAmountPaid(Number(e.target.value) || 0)}
+                    value={amountPaid ?? ""}
+                    onChange={(e) => setAmountPaid(e.target.value ? Number(e.target.value) : null)}
                     className="w-full px-3 py-2 rounded-lg border border-warm text-sm focus:outline-none focus:border-accent"
-                    placeholder={cartTotal.toString()}
+                    placeholder={`${fmt(cartTotal)} (compte exact)`}
                   />
-                  {amountPaid > 0 && (
+                  {amountPaid !== null && amountPaid !== cartTotal && (
                     <p className={`text-sm mt-1 font-semibold ${change >= 0 ? "text-green-700" : "text-red-600"}`}>
                       {change >= 0 ? `Monnaie à rendre : ${fmt(change)} FCFA` : `Il manque ${fmt(Math.abs(change))} FCFA`}
                     </p>
@@ -353,7 +357,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
               {/* Quick amounts */}
               {paymentMethod === "cash" && (
                 <div className="flex gap-2 flex-wrap">
-                  {[cartTotal, 5000, 10000, 15000, 20000, 25000].filter((v, i, a) => a.indexOf(v) === i).map((amount) => (
+                  {[5000, 10000, 15000, 20000, 25000].filter((v) => v >= cartTotal).slice(0, 4).map((amount) => (
                     <button
                       key={amount}
                       onClick={() => setAmountPaid(amount)}
@@ -369,7 +373,7 @@ export default function POSTab({ books, showMessage }: POSTabProps) {
 
               <button
                 onClick={handleCheckout}
-                disabled={processing || (paymentMethod === "cash" && amountPaid < cartTotal)}
+                disabled={processing || (paymentMethod === "cash" && amountPaid !== null && amountPaid < cartTotal)}
                 className="w-full py-3 rounded-lg bg-green-600 text-white font-bold text-sm hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing ? "Traitement..." : `Encaisser ${fmt(cartTotal)} FCFA`}
