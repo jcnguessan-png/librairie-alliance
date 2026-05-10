@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #1B2A4A;
+  --color-primary-light: #2A3F6A;
+  --color-accent: #C8A96E;
+  --color-accent-light: #D4BC8A;
+  --color-secondary: #FAF8F5;
+  --color-warm: #F0EDE8;
+  --color-burgundy: #7A2D3A;
+  --color-text: #1A1A1A;
+  --color-text-muted: #6B7280;
+
+  --font-heading: "Playfair Display", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-quote: "Lora", Georgia, serif;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Book 3D effect */
+.book-shadow {
+  box-shadow:
+    6px 6px 12px rgba(0, 0, 0, 0.15),
+    2px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-shadow:hover {
+  transform: perspective(800px) rotateY(-5deg) translateY(-4px);
+  box-shadow:
+    10px 10px 20px rgba(0, 0, 0, 0.2),
+    4px 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* WhatsApp pulse animation */
+@keyframes pulse-whatsapp {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(37, 211, 102, 0);
+  }
+}
+
+.whatsapp-pulse {
+  animation: pulse-whatsapp 2s infinite;
+}
+
+/* Audio player custom styles */
+.audio-progress::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+}
+
+.audio-progress::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  border: none;
+}
+
+/* Scroll animations base */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #C8A96E, #E8D5A8, #C8A96E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
