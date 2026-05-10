@@ -1,16 +1,22 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, accessSync, constants } from "fs";
 import { join, dirname } from "path";
 
 const DATA_PATH = join(process.cwd(), "data", "inventory.json");
-const TMP_PATH = join("/tmp", "inventory.json");
+const TMP_PATH = process.platform === "win32"
+  ? join(process.env.TEMP || "C:\\Temp", "librairie-inventory.json")
+  : "/tmp/inventory.json";
 
-function getInventoryPath(): string {
+function isWritable(filePath: string): boolean {
   try {
-    writeFileSync(DATA_PATH, readFileSync(DATA_PATH));
-    return DATA_PATH;
+    accessSync(dirname(filePath), constants.W_OK);
+    return true;
   } catch {
-    return TMP_PATH;
+    return false;
   }
+}
+
+function getWritePath(): string {
+  return isWritable(DATA_PATH) ? DATA_PATH : TMP_PATH;
 }
 
 function ensureDir(filePath: string): void {
@@ -50,7 +56,7 @@ export function readInventory(): BookInventory[] {
 }
 
 function writeInventory(items: BookInventory[]): void {
-  const path = getInventoryPath();
+  const path = getWritePath();
   ensureDir(path);
   writeFileSync(path, JSON.stringify(items, null, 2), "utf-8");
 }

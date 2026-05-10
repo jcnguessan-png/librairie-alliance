@@ -96,9 +96,12 @@ export default function MarginsTab({ books, showMessage }: MarginsTabProps) {
         showMessage("Données enregistrées", "success");
         setEditing(null);
         fetchInventory();
+      } else {
+        const err = await res.json().catch(() => null);
+        showMessage(err?.error || `Erreur serveur (${res.status})`, "error");
       }
     } catch {
-      showMessage("Erreur de sauvegarde", "error");
+      showMessage("Erreur réseau", "error");
     } finally {
       setSaving(false);
     }
