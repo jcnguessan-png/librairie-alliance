@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "purchasePrice": 4.19,
+    "qtyInStock": 45,
+    "qtyOrdered": 50,
+    "unitWeightGrams": 0,
+    "shippingCost": 0,
+    "marketingCost": 0,
+    "authorRights": 0,
+    "salePriceFrance": null,
+    "salePriceCDI": 15000,
+    "qtySoldFrance": 0,
+    "qtySoldCDI": 0,
+    "giftsQty": 5,
+    "slug": "la-realite-du-monde-des-esprits",
+    "updatedAt": "2026-05-10T23:26:46.164Z"
+  }
+]

@@ -6,40 +6,28 @@ import { books as staticBooks } from "@/data/books";
 import type { Book } from "@/data/books";
 
 export async function GET() {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) {
+  if (!(await verifyAdminSession()))
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const books = readBooksFromJson() ?? staticBooks;
+    return NextResponse.json(books);
+  } catch (e) {
+    return NextResponse.json({ error: "Erreur lecture livres", detail: String(e) }, { status: 500 });
   }
-
-  const books = readBooksFromJson() ?? staticBooks;
-  return NextResponse.json(books);
 }
 
 export async function POST(request: Request) {
-  const isAdmin = await verifyAdminSession();
-  if (!isAdmin) {
+  if (!(await verifyAdminSession()))
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
 
   try {
     const body = await request.json();
+    if (!body.title || !body.slug)
+      return NextResponse.json({ error: "Titre et slug sont requis" }, { status: 400 });
 
-    // Validate required fields
-    if (!body.title || !body.slug) {
-      return NextResponse.json(
-        { error: "Titre et slug sont requis" },
-        { status: 400 }
-      );
-    }
-
-    // Check for duplicate slug
     const existing = readBooksFromJson() ?? staticBooks;
-    if (existing.some((b) => b.slug === body.slug)) {
-      return NextResponse.json(
-        { error: "Un livre avec ce slug existe déjà" },
-        { status: 409 }
-      );
-    }
+    if (existing.some((b) => b.slug === body.slug))
+      return NextResponse.json({ error: "Un livre avec ce slug existe déjà" }, { status: 409 });
 
     const book: Book = {
       slug: body.slug,
@@ -51,6 +39,7 @@ export async function POST(request: Request) {
       badge: body.badge || undefined,
       price: body.price ?? null,
       formats: body.formats || ["papier"],
+      themes: body.themes || [],
       audioExcerpt: body.audioExcerpt || null,
       amazonLink: body.amazonLink || null,
       description: body.description || "",
@@ -63,12 +52,8 @@ export async function POST(request: Request) {
 
     addBook(book);
     invalidateCache();
-
     return NextResponse.json(book, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Données invalides" },
-      { status: 400 }
-    );
+  } catch (e) {
+    return NextResponse.json({ error: "Erreur ajout livre", detail: String(e) }, { status: 500 });
   }
 }

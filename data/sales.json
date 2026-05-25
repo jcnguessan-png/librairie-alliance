@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "items": [
+      {
+        "slug": "la-realite-du-monde-des-esprits",
+        "title": "La Réalité du Monde des Esprits",
+        "price": 15000,
+        "qty": 1
+      }
+    ],
+    "total": 15000,
+    "paymentMethod": "cash",
+    "amountPaid": 15000,
+    "change": 0,
+    "id": "VNT-MP0EAV5U",
+    "date": "2026-05-10T23:19:50.082Z"
+  }
+]

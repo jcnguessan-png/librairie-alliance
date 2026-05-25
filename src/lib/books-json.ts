@@ -1,22 +1,41 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { readFileSync, writeFileSync, existsSync, accessSync, constants } from "fs";
+import { join, dirname } from "path";
 import type { Book } from "@/data/books";
 
-const BOOKS_JSON_PATH = join(process.cwd(), "data", "books.json");
+const DATA_PATH = join(process.cwd(), "data", "books.json");
+const TMP_PATH = process.platform === "win32"
+  ? join(process.env.TEMP || "C:\\Temp", "librairie-books.json")
+  : "/tmp/librairie-books.json";
 
-export function readBooksFromJson(): Book[] | null {
+function isWritable(filePath: string): boolean {
   try {
-    if (!existsSync(BOOKS_JSON_PATH)) return null;
-    const raw = readFileSync(BOOKS_JSON_PATH, "utf-8");
-    const books = JSON.parse(raw) as Book[];
-    return books.length > 0 ? books : null;
+    accessSync(dirname(filePath), constants.W_OK);
+    return true;
   } catch {
-    return null;
+    return false;
   }
 }
 
+function getWritePath(): string {
+  return isWritable(DATA_PATH) ? DATA_PATH : TMP_PATH;
+}
+
+export function readBooksFromJson(): Book[] | null {
+  // Try primary path first, then fallback
+  for (const p of [DATA_PATH, TMP_PATH]) {
+    try {
+      if (!existsSync(p)) continue;
+      const raw = readFileSync(p, "utf-8");
+      const books = JSON.parse(raw) as Book[];
+      if (books.length > 0) return books;
+    } catch { /* try next */ }
+  }
+  return null;
+}
+
 export function writeBooksToJson(books: Book[]): void {
-  writeFileSync(BOOKS_JSON_PATH, JSON.stringify(books, null, 2), "utf-8");
+  const path = getWritePath();
+  writeFileSync(path, JSON.stringify(books, null, 2), "utf-8");
 }
 
 export function addBook(book: Book): void {
