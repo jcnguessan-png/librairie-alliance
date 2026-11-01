@@ -36,6 +36,8 @@ export interface Book {
   themes?: BookTheme[];
   audioExcerpt?: string | null;
   amazonLink?: string | null;
+  /** Message affiché quand le livre est épuisé (ex. date du prochain arrivage) */
+  restockNote?: string | null;
   description: string;
   longDescription?: string;
   coverImage: string;

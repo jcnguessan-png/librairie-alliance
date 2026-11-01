@@ -1,0 +1,37 @@
+[
+  {
+    "status": "draft",
+    "partner": {
+      "name": "Librairie de France",
+      "legalForm": "SARL",
+      "rccm": "CI-ABJ123",
+      "ncc": "",
+      "address": "Plateau",
+      "city": "Abidjan",
+      "phone": "",
+      "email": "",
+      "representative": "Madame KOUA",
+      "representativeTitle": "Gérant(e)"
+    },
+    "startDate": "2026-11-16",
+    "durationMonths": 12,
+    "commissionRate": 30,
+    "reportDay": 5,
+    "paymentDays": 15,
+    "noticeDays": 30,
+    "signingPlace": "Abidjan",
+    "items": [
+      {
+        "slug": "comment-preparer-et-reussir-une-nouvelle-annee-collector",
+        "title": "Comment préparer et réussir une nouvelle année ? — Édition Collector (relié)",
+        "qty": 25,
+        "unitPrice": 25000
+      }
+    ],
+    "notes": "",
+    "id": "ctr_mvxs7k4f",
+    "number": "DV-2026-001",
+    "createdAt": "2026-11-01T12:03:48.255Z",
+    "updatedAt": "2026-11-01T12:03:48.255Z"
+  }
+]

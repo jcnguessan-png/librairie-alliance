@@ -49,6 +49,7 @@ export default async function BookDetailPage({
 
   const isAvailable = book.status === "available";
   const isComingSoon = book.status === "coming-soon";
+  const awaitingRestock = book.status === "out-of-stock" && !!book.restockNote;
   const whatsappLink = isAvailable
     ? getOrderLink(book.title)
     : getNotifyLink(book.title);
@@ -172,6 +173,11 @@ export default async function BookDetailPage({
                     >
                       {getStatusLabel(book.status)}
                     </span>
+                    {book.status === "out-of-stock" && book.restockNote && (
+                      <p className="text-xs text-text-muted mt-1">
+                        {book.restockNote}
+                      </p>
+                    )}
                   </div>
                   <div className="bg-secondary rounded-lg p-3">
                     <p className="text-xs text-text-muted">Format</p>
@@ -228,7 +234,7 @@ export default async function BookDetailPage({
                       "inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg font-semibold transition-colors",
                       isAvailable
                         ? "bg-primary text-white hover:bg-primary-light"
-                        : isComingSoon
+                        : isComingSoon || awaitingRestock
                           ? "bg-accent text-primary hover:bg-accent-light"
                           : "bg-gray-200 text-text-muted cursor-not-allowed"
                     )}
@@ -244,7 +250,9 @@ export default async function BookDetailPage({
                       ? "Commander via WhatsApp"
                       : isComingSoon
                         ? "Me notifier"
-                        : "Indisponible"}
+                        : awaitingRestock
+                          ? "Me prévenir à l'arrivage"
+                          : "Indisponible"}
                   </a>
                   {book.amazonLink && (
                     <a

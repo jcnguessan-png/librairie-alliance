@@ -5,8 +5,9 @@ import Image from "next/image";
 import type { Book, BookStatus, BookCategory, BookFormat } from "@/data/books";
 import MarginsTab from "./components/MarginsTab";
 import POSTab from "./components/POSTab";
+import ContractsTab from "./components/ContractsTab";
 
-type AdminTab = "books" | "margins" | "pos";
+type AdminTab = "books" | "margins" | "pos" | "contracts";
 
 const STATUS_OPTIONS: { value: BookStatus; label: string }[] = [
   { value: "available", label: "Disponible" },
@@ -54,6 +55,7 @@ const TABS: { id: AdminTab; label: string; icon: string }[] = [
   { id: "books", label: "Livres", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
   { id: "margins", label: "Marges & Coûts", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" },
   { id: "pos", label: "Point de vente", icon: "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" },
+  { id: "contracts", label: "Contrats dépôt-vente", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
 ];
 
 export default function AdminPage() {
@@ -313,6 +315,17 @@ export default function AdminPage() {
             <POSTab books={books} showMessage={showMessage} />
           </>
         )}
+
+        {/* ─── Contracts Tab ───────────────────────────────────────── */}
+        {activeTab === "contracts" && (
+          <>
+            <div className="mb-6">
+              <h1 className="font-heading text-2xl sm:text-3xl font-bold text-primary">Contrats de dépôt-vente</h1>
+              <p className="text-text-muted text-sm">Générez les contrats de collaboration avec les librairies partenaires</p>
+            </div>
+            <ContractsTab books={books} showMessage={showMessage} />
+          </>
+        )}
       </div>
 
       {/* ─── Book Edit Modal ──────────────────────────────────────── */}
@@ -355,6 +368,12 @@ export default function AdminPage() {
                   </select>
                 </div>
               </div>
+              {editingBook.status === "out-of-stock" && (
+                <div>
+                  <label className="block text-sm font-medium text-text mb-1">Message d&apos;arrivage</label>
+                  <input type="text" value={editingBook.restockNote || ""} onChange={(e) => setEditingBook((prev) => ({ ...prev, restockNote: e.target.value || null }))} className="w-full px-3 py-2 rounded-lg border border-warm text-sm focus:outline-none focus:border-accent" placeholder="Prochain arrivage à Abidjan : février 2027" />
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-text mb-1">Prix (FCFA)</label>

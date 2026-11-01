@@ -35,6 +35,9 @@ const emptyInventory: Omit<BookInventory, "slug" | "updatedAt"> = {
   giftsQty: 0,
 };
 
+// Parité fixe EUR / FCFA (XOF) — pour convertir les coûts d'impression en €.
+const EUR_TO_FCFA = 655.957;
+
 function fmt(n: number, decimals = 0): string {
   return new Intl.NumberFormat("fr-FR", {
     minimumFractionDigits: decimals,
@@ -73,14 +76,15 @@ export default function MarginsTab({ books, showMessage }: MarginsTabProps) {
     const costOfReturn = totalPurchase + inv.shippingCost;
     const unitCost = costOfReturn / qty;
     const marginFranceUnit = (inv.salePriceFrance ?? 0) - unitCost;
-    const marginCDIUnit = (inv.salePriceCDI ?? 0) - unitCost;
+    const unitCostFCFA = unitCost * EUR_TO_FCFA;
+    const marginCDIUnit = (inv.salePriceCDI ?? 0) - unitCostFCFA;
     const revFrance = (inv.salePriceFrance ?? 0) * inv.qtySoldFrance;
     const revCDI = (inv.salePriceCDI ?? 0) * inv.qtySoldCDI;
     const margeBruteFR = marginFranceUnit * inv.qtySoldFrance;
     const margeBruteCI = marginCDIUnit * inv.qtySoldCDI;
     const margeNetFR = margeBruteFR - inv.authorRights;
     const margeNetCI = margeBruteCI - inv.authorRights - inv.marketingCost;
-    return { totalPurchase, costOfReturn, unitCost, marginFranceUnit, marginCDIUnit, revFrance, revCDI, margeBruteFR, margeBruteCI, margeNetFR, margeNetCI };
+    return { totalPurchase, costOfReturn, unitCost, unitCostFCFA, marginFranceUnit, marginCDIUnit, revFrance, revCDI, margeBruteFR, margeBruteCI, margeNetFR, margeNetCI };
   };
 
   const handleSave = async () => {
@@ -262,6 +266,7 @@ export default function MarginsTab({ books, showMessage }: MarginsTabProps) {
                       <div>
                         <p className="text-text-muted">Coût unitaire</p>
                         <p className="font-semibold text-primary">{fmt(c.unitCost, 2)} €</p>
+                        <p className="text-xs text-text-muted">≈ {fmt(c.unitCostFCFA)} FCFA</p>
                       </div>
                     </div>
                   </div>

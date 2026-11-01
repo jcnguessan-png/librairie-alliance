@@ -104,3 +104,28 @@ body {
   background: var(--color-accent);
   border-radius: 4px;
 }
+
+/* ─── Contrats imprimables ─────────────────────────────────────── */
+@layer components {
+  .contract .contract-h2 {
+    font-family: var(--font-heading), serif;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin: 1.25rem 0 0.4rem;
+    break-after: avoid;
+  }
+
+  .contract p {
+    text-align: justify;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 18mm;
+  }
+  body {
+    background: #fff;
+  }
+}

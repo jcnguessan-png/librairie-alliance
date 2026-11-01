@@ -11,6 +11,7 @@ interface BookCardProps {
 export default function BookCard({ book }: BookCardProps) {
   const isAvailable = book.status === "available";
   const isComingSoon = book.status === "coming-soon";
+  const onAmazonOnly = book.status === "out-of-stock" && !!book.amazonLink;
   const whatsappLink = isAvailable
     ? getOrderLink(book.title)
     : getNotifyLink(book.title);
@@ -62,15 +63,19 @@ export default function BookCard({ book }: BookCardProps) {
           </span>
         </div>
 
+        {book.status === "out-of-stock" && book.restockNote && (
+          <p className="text-xs text-text-muted mb-3">{book.restockNote}</p>
+        )}
+
         <a
-          href={whatsappLink}
+          href={onAmazonOnly ? book.amazonLink! : whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
             "block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition-all",
             isAvailable
               ? "bg-primary text-white hover:bg-primary-light"
-              : isComingSoon
+              : isComingSoon || onAmazonOnly
                 ? "bg-accent/20 text-primary hover:bg-accent/30"
                 : "bg-gray-100 text-text-muted cursor-not-allowed"
           )}
@@ -79,7 +84,9 @@ export default function BookCard({ book }: BookCardProps) {
             ? "Commander"
             : isComingSoon
               ? "Me notifier"
-              : "Indisponible"}
+              : onAmazonOnly
+                ? "Commander sur Amazon"
+                : "Indisponible"}
         </a>
       </div>
     </div>
